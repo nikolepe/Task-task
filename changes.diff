@@ -1,0 +1,149 @@
+--- 000-default.conf.bak	2024-11-05 01:21:00.555960632 +0700
++++ /etc/apache2/sites-available/000-default.conf	2024-10-30 17:36:00.028149505 +0700
+@@ -1,4 +1,4 @@
+-<VirtualHost *:80>
++<VirtualHost *:81>
+ 	# The ServerName directive sets the request scheme, hostname and port that
+ 	# the server uses to identify itself. This is used when creating
+ 	# redirection URLs. In the context of virtual hosts, the ServerName
+--- apache2.conf.bak	2024-10-30 17:25:49.706606615 +0700
++++ /etc/apache2/apache2.conf	2024-10-31 15:59:56.329604291 +0700
+@@ -225,3 +225,8 @@
+ IncludeOptional sites-enabled/*.conf
+ 
+ # vim: syntax=apache ts=4 sw=4 sts=4 sr noet
++ServerName site.ru
++
++<DirectoryMatch "^/.*/(\.svn|\.git)/">
++	Require all denied
++</DirectoryMatch>
+--- my.cnf.bak	2024-10-30 20:42:21.372914380 +0700
++++ /etc/mysql/my.cnf	2024-10-30 20:43:32.363710363 +0700
+@@ -19,3 +19,7 @@
+ 
+ !includedir /etc/mysql/conf.d/
+ !includedir /etc/mysql/mysql.conf.d/
++[mysqld]
++tmp_table_size = 32M
++thread_cache_size = 20
++innodb_file_per_table = 1
+--- nginx.conf.bak	2024-10-30 17:25:18.991752829 +0700
++++ /etc/nginx/nginx.conf	2024-11-02 17:11:41.270153070 +0700
+@@ -1,4 +1,4 @@
+-user www-data;
++user site-2.ru;
+ worker_processes auto;
+ pid /run/nginx.pid;
+ include /etc/nginx/modules-enabled/*.conf;
+@@ -50,7 +50,10 @@
+ 	# gzip_comp_level 6;
+ 	# gzip_buffers 16 8k;
+ 	# gzip_http_version 1.1;
+-	# gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
++	gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
++
++	client_max_body_size 64M;
++	server_tokens off;
+ 
+ 	##
+ 	# Virtual Host Configs
+--- php.ini.bak	2024-10-30 17:27:08.137285075 +0700
++++ /etc/php/8.1/fpm/php.ini	2024-11-03 23:52:44.180914134 +0700
+@@ -195,7 +195,7 @@
+ ; Development Value: Off
+ ; Production Value: Off
+ ; https://php.net/short-open-tag
+-short_open_tag = Off
++short_open_tag = On
+ 
+ ; The number of significant digits displayed in floating point numbers.
+ ; https://php.net/precision
+@@ -695,7 +695,7 @@
+ ; Its value may be 0 to disable the limit. It is ignored if POST data reading
+ ; is disabled through enable_post_data_reading.
+ ; https://php.net/post-max-size
+-post_max_size = 8M
++post_max_size = 64M
+ 
+ ; Automatically add files before PHP document.
+ ; https://php.net/auto-prepend-file
+@@ -766,7 +766,7 @@
+ 
+ ; Directory where the temporary files should be placed.
+ ; Defaults to the system default (see sys_get_temp_dir)
+-;sys_temp_dir = "/tmp"
++;sys_temp_dir = "/var/www/site.ru/tmp"
+ 
+ ; Whether or not to enable the dl() function.  The dl() function does NOT work
+ ; properly in multithreaded servers, such as IIS or Zeus, and is automatically
+@@ -847,7 +847,7 @@
+ 
+ ; Maximum allowed size for uploaded files.
+ ; https://php.net/upload-max-filesize
+-upload_max_filesize = 2M
++upload_max_filesize = 64M
+ 
+ ; Maximum number of files that can be uploaded via a single request
+ max_file_uploads = 20
+@@ -965,7 +965,7 @@
+ [Date]
+ ; Defines the default timezone used by the date functions
+ ; https://php.net/date.timezone
+-;date.timezone =
++;date.timezone = "Europe/Moscow"
+ 
+ ; https://php.net/date.default-latitude
+ ;date.default_latitude = 31.7667
+@@ -1331,7 +1331,7 @@
+ ;
+ ; The path can be defined as:
+ ;
+-;     session.save_path = "N;/path"
++;     session.save_path = "/var/www/site.ru/sessions"
+ ;
+ ; where N is an integer.  Instead of storing all the session files in
+ ; /path, what this will do is use subdirectories N-levels deep, and
+@@ -1419,7 +1419,7 @@
+ ; Development Value: 1
+ ; Production Value: 1
+ ; https://php.net/session.gc-probability
+-session.gc_probability = 0
++session.gc_probability = 1
+ 
+ ; Defines the probability that the 'garbage collection' process is started on every
+ ; session initialization. The probability is calculated by using gc_probability/gc_divisor,
+@@ -1429,12 +1429,12 @@
+ ; Development Value: 1000
+ ; Production Value: 1000
+ ; https://php.net/session.gc-divisor
+-session.gc_divisor = 1000
++session.gc_divisor = 10
+ 
+ ; After this number of seconds, stored data will be seen as 'garbage' and
+ ; cleaned up by the garbage collection process.
+ ; https://php.net/session.gc-maxlifetime
+-session.gc_maxlifetime = 1440
++session.gc_maxlifetime = 86400
+ 
+ ; NOTE: If you are using the subdirectory option for storing session files
+ ;       (see session.save_path above), then garbage collection does *not*
+@@ -1795,7 +1795,7 @@
+ ; How often (in seconds) to check file timestamps for changes to the shared
+ ; memory storage allocation. ("1" means validate once per second, but only
+ ; once per request. "0" means always validate)
+-;opcache.revalidate_freq=2
++;opcache.revalidate_freq=0
+ 
+ ; Enables or disables file search in include_path optimization
+ ;opcache.revalidate_path=0
+--- ports.conf.bak	2024-11-05 01:20:13.061122726 +0700
++++ /etc/apache2/ports.conf	2024-10-30 17:35:29.608443521 +0700
+@@ -2,7 +2,7 @@
+ # have to change the VirtualHost statement in
+ # /etc/apache2/sites-enabled/000-default.conf
+ 
+-Listen 80
++Listen 81
+ 
+ <IfModule ssl_module>
+ 	Listen 443
